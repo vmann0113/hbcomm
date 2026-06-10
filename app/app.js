@@ -53,6 +53,15 @@ function loadSet(key, fallback) {
 }
 
 // ── 로그인 모달 (이메일 매직링크 + 카카오) ─────────────────────
+function hbKrError(msg) {
+  const m = (msg || '').toLowerCase();
+  if (m.includes('rate limit') || m.includes('after') || m.includes('too many') || m.includes('exceed')) return '잠깐! 요청이 많아요. 1~2분 뒤에 다시 시도해주세요.';
+  if (m.includes('expired') || m.includes('invalid') || m.includes('token')) return '코드가 올바르지 않거나 만료됐어요. 다시 확인해주세요.';
+  if (m.includes('not found') || m.includes('no user')) return '먼저 인증 코드를 받아주세요.';
+  if (m.includes('network') || m.includes('fetch') || m.includes('connect')) return '네트워크 연결을 확인해주세요.';
+  if (m.includes('email') && m.includes('valid')) return '이메일 형식을 확인해주세요.';
+  return '잠시 후 다시 시도해주세요.';
+}
 function LoginModal({
   app,
   onClose
@@ -72,7 +81,7 @@ function LoginModal({
     const res = await window.hbAuth.loginEmail(email);
     setBusy(false);
     if (res && res.error) {
-      setErr(res.error.message || '잠시 후 다시 시도해주세요');
+      setErr(hbKrError(res.error.message));
       return;
     }
     setStep('code');
@@ -80,7 +89,7 @@ function LoginModal({
   const submitCode = async () => {
     const c = (code || '').replace(/\D/g, '');
     if (c.length < 6) {
-      setErr('메일로 받은 6자리 코드를 입력해주세요');
+      setErr('메일로 받은 인증 코드를 입력해주세요');
       return;
     }
     setBusy(true);
@@ -88,7 +97,7 @@ function LoginModal({
     const res = await window.hbAuth.verifyEmailCode(email, c);
     setBusy(false);
     if (res && res.error) {
-      setErr('코드가 올바르지 않거나 만료됐어요. 다시 확인해주세요');
+      setErr(hbKrError(res.error.message));
       return;
     }
     location.reload(); // 세션 적용
@@ -145,14 +154,14 @@ function LoginModal({
     className: "login-body"
   }, /*#__PURE__*/React.createElement("div", {
     className: "login-code-to"
-  }, "\uD83D\uDCEC ", /*#__PURE__*/React.createElement("b", null, email), " \uB85C \uBCF4\uB0B8", /*#__PURE__*/React.createElement("br", null), "6\uC790\uB9AC \uCF54\uB4DC\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694"), /*#__PURE__*/React.createElement("input", {
+  }, "\uD83D\uDCEC ", /*#__PURE__*/React.createElement("b", null, email), " \uB85C \uBCF4\uB0B8", /*#__PURE__*/React.createElement("br", null), "\uC778\uC99D \uCF54\uB4DC\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694"), /*#__PURE__*/React.createElement("input", {
     className: "sheet-input login-input login-code",
     type: "text",
     inputMode: "numeric",
-    maxLength: 6,
-    placeholder: "\u25CF \u25CF \u25CF \u25CF \u25CF \u25CF",
+    maxLength: 8,
+    placeholder: "\uC778\uC99D \uCF54\uB4DC",
     value: code,
-    onChange: e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6)),
+    onChange: e => setCode(e.target.value.replace(/\D/g, '').slice(0, 8)),
     onKeyDown: e => e.key === 'Enter' && submitCode(),
     autoFocus: true
   }), err && /*#__PURE__*/React.createElement("div", {

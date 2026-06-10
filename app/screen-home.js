@@ -439,7 +439,7 @@ function HomeScreen({
     className: "lab"
   }, "\uC608\uC2DD\uAE4C\uC9C0")), /*#__PURE__*/React.createElement("div", {
     className: "who"
-  }, "\uACB0\uD63C\uC900\uBE44 \uB2E8\uACC4\uC5D0 \uB9DE\uCDB0", /*#__PURE__*/React.createElement("br", null), "\uCD94\uCC9C\uC744 \uBC1B\uACE0 \uC788\uC5B4\uC694")), /*#__PURE__*/React.createElement(GroupWidget, {
+  }, "\uACB0\uD63C\uC900\uBE44 \uB2E8\uACC4", /*#__PURE__*/React.createElement("br", null), "\uB9DE\uCDA4 \uCD94\uCC9C \uC911")), /*#__PURE__*/React.createElement(GroupWidget, {
     app: app
   }), /*#__PURE__*/React.createElement(StampCard, {
     app: app
@@ -663,7 +663,7 @@ function ProfileScreen({
       display: 'flex',
       flexDirection: 'column',
       gap: 12,
-      margin: '14px 18px 0'
+      margin: '14px 0 0'
     }
   }, /*#__PURE__*/React.createElement(LevelWidget, null), /*#__PURE__*/React.createElement(StampCard, {
     app: app
