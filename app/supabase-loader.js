@@ -173,7 +173,11 @@ window.hbAuth = {
   },
   async loginKakao() {
     if (!hbSb) return { error: { message: '서버에 연결되어 있지 않아요' } };
-    return hbSb.auth.signInWithOAuth({ provider: 'kakao', options: { redirectTo: hbAuthCleanRedirect() } });
+    // 카카오 이메일(account_email)은 비즈앱 검수 전 요청 불가 → 닉네임·프로필사진만 요청
+    return hbSb.auth.signInWithOAuth({
+      provider: 'kakao',
+      options: { redirectTo: hbAuthCleanRedirect(), scopes: 'profile_nickname profile_image' },
+    });
   },
   async logout() { if (hbSb) await hbSb.auth.signOut(); location.reload(); },
   needsOnboarding() {
