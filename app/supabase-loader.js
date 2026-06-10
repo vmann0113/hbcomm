@@ -151,4 +151,76 @@ async function hbLoadContent() {
 }
 
 // app.js가 이 Promise를 기다린 뒤 렌더합니다.
-window.__hbReady = hbLoadContent();
+
+// ── 인증 (이메일 매직링크 + 카카오 OAuth) ─────────────────────
+const hbAuthCleanRedirect = () => location.href.split('#')[0].split('?')[0];
+window.hbAuth = {
+  user: null,
+  profile: null,
+  ready: false,
+  isLoggedIn() { return !!window.hbAuth.user; },
+  displayName() {
+    const a = window.hbAuth;
+    return (a.profile && a.profile.name) || (a.user && a.user.email ? a.user.email.split('@')[0] : '게스트');
+  },
+  async loginEmail(email) {
+    if (!hbSb) return { error: { message: '서버에 연결되어 있지 않아요' } };
+    return hbSb.auth.signInWithOtp({ email: (email || '').trim(), options: { emailRedirectTo: hbAuthCleanRedirect() } });
+  },
+  async loginKakao() {
+    if (!hbSb) return { error: { message: '서버에 연결되어 있지 않아요' } };
+    return hbSb.auth.signInWithOAuth({ provider: 'kakao', options: { redirectTo: hbAuthCleanRedirect() } });
+  },
+  async logout() { if (hbSb) await hbSb.auth.signOut(); location.reload(); },
+};
+
+async function hbFetchOrCreateProfile(user) {
+  if (!hbSb || !user) return null;
+  const sel = await hbSb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  if (sel.error) { console.warn('[auth] profile:', sel.error.message); return null; }
+  if (sel.data) return sel.data;
+  // 첫 로그인 → 프로필 생성
+  const meta = user.user_metadata || {};
+  const name = meta.name || meta.full_name || meta.nickname || (user.email ? user.email.split('@')[0] : '회원');
+  const ins = await hbSb.from('profiles').insert({ id: user.id, name }).select('*').maybeSingle();
+  if (ins.error) { console.warn('[auth] profile insert:', ins.error.message); return { id: user.id, name }; }
+  return ins.data;
+}
+
+function hbApplyUserToME(profile, user) {
+  if (!window.ME) return;
+  if (profile && user) {
+    window.ME.id = user.id;
+    window.ME.name = profile.name || window.ME.name;
+    window.ME.handle = user.email ? '@' + user.email.split('@')[0] : window.ME.handle;
+    if (profile.wedding_date) window.ME.weddingDate = profile.wedding_date;
+    if (profile.stage) window.ME.stage = profile.stage;
+    if (Array.isArray(profile.fav_topics) && profile.fav_topics.length) window.ME.favTopics = profile.fav_topics;
+    if (typeof profile.xp === 'number') window.ME.xp = profile.xp;
+    window.ME.isGuest = false;
+  } else {
+    window.ME.isGuest = true;
+  }
+}
+
+async function hbBootstrapAuth() {
+  if (!hbSb) { if (window.ME) window.ME.isGuest = true; return; }
+  try {
+    const { data } = await hbSb.auth.getSession();
+    const user = data && data.session ? data.session.user : null;
+    window.hbAuth.user = user;
+    if (user) {
+      window.hbAuth.profile = await hbFetchOrCreateProfile(user);
+      hbApplyUserToME(window.hbAuth.profile, user);
+    } else if (window.ME) {
+      window.ME.isGuest = true;
+    }
+  } catch (e) {
+    console.warn('[auth] 세션 부트스트랩 실패', e);
+    if (window.ME) window.ME.isGuest = true;
+  }
+  window.hbAuth.ready = true;
+}
+
+// 콘텐츠 + 인증 둘 다 준비된 뒤 렌더
+window.__hbReady = Promise.all([hbLoadContent(), hbBootstrapAuth()]);

@@ -51,6 +51,95 @@ function loadSet(key, fallback) {
     return new Set(fallback);
   }
 }
+
+// ── 로그인 모달 (이메일 매직링크 + 카카오) ─────────────────────
+function LoginModal({
+  app,
+  onClose
+}) {
+  const [email, setEmail] = uA('');
+  const [sent, setSent] = uA(false);
+  const [busy, setBusy] = uA(false);
+  const [err, setErr] = uA('');
+  const submitEmail = async () => {
+    if (!/.+@.+\..+/.test(email)) {
+      setErr('이메일 형식을 확인해주세요');
+      return;
+    }
+    setBusy(true);
+    setErr('');
+    const res = await window.hbAuth.loginEmail(email);
+    setBusy(false);
+    if (res && res.error) {
+      setErr(res.error.message || '잠시 후 다시 시도해주세요');
+      return;
+    }
+    setSent(true);
+  };
+  const kakao = async () => {
+    setErr('');
+    const res = await window.hbAuth.loginKakao();
+    if (res && res.error) setErr(res.error.message || '카카오 로그인을 사용할 수 없어요');
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "sheet-wrap",
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "sheet login-sheet",
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "login-x",
+    onClick: onClose,
+    "aria-label": "\uB2EB\uAE30"
+  }, "\u2715"), /*#__PURE__*/React.createElement("div", {
+    className: "login-head"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "login-emoji"
+  }, "\uD83C\uDF88"), /*#__PURE__*/React.createElement("div", {
+    className: "login-title"
+  }, "\uD55C\uBE54\uCEE4\uBBA4\uB2C8\uD2F0 \uC2DC\uC791\uD558\uAE30"), /*#__PURE__*/React.createElement("div", {
+    className: "login-sub"
+  }, "\uB85C\uADF8\uC778\uD558\uBA74 \uAE00\xB7\uD6C4\uAE30\xB7\uC18C\uBAA8\uC784\uC744 \uD568\uAED8\uD560 \uC218 \uC788\uC5B4\uC694")), !sent ? /*#__PURE__*/React.createElement("div", {
+    className: "login-body"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "kakao-btn",
+    onClick: kakao
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "kakao-ic"
+  }, "\uD83D\uDCAC"), " \uCE74\uCE74\uC624\uB85C \uC2DC\uC791\uD558\uAE30"), /*#__PURE__*/React.createElement("div", {
+    className: "login-or"
+  }, /*#__PURE__*/React.createElement("span", null, "\uB610\uB294 \uC774\uBA54\uC77C\uB85C")), /*#__PURE__*/React.createElement("input", {
+    className: "sheet-input login-input",
+    type: "email",
+    inputMode: "email",
+    placeholder: "\uC774\uBA54\uC77C \uC8FC\uC18C",
+    value: email,
+    onChange: e => setEmail(e.target.value),
+    onKeyDown: e => e.key === 'Enter' && submitEmail()
+  }), err && /*#__PURE__*/React.createElement("div", {
+    className: "login-err"
+  }, err), /*#__PURE__*/React.createElement("button", {
+    className: "login-go",
+    disabled: busy,
+    onClick: submitEmail
+  }, busy ? '보내는 중…' : '로그인 링크 받기'), /*#__PURE__*/React.createElement("div", {
+    className: "login-hint"
+  }, "\uC785\uB825\uD55C \uC774\uBA54\uC77C\uB85C \uB85C\uADF8\uC778 \uB9C1\uD06C\uB97C \uBCF4\uB0B4\uB4DC\uB824\uC694. \uBE44\uBC00\uBC88\uD638\uAC00 \uC5C6\uC5B4\uC694.")) : /*#__PURE__*/React.createElement("div", {
+    className: "login-sent"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "login-sent-emoji"
+  }, "\uD83D\uDCEC"), /*#__PURE__*/React.createElement("div", {
+    className: "login-sent-t"
+  }, "\uBA54\uC77C\uC744 \uD655\uC778\uD574\uC8FC\uC138\uC694!"), /*#__PURE__*/React.createElement("div", {
+    className: "login-sent-s"
+  }, /*#__PURE__*/React.createElement("b", null, email), " \uB85C \uB85C\uADF8\uC778 \uB9C1\uD06C\uB97C \uBCF4\uB0C8\uC5B4\uC694. \uB9C1\uD06C\uB97C \uB204\uB974\uBA74 \uC790\uB3D9\uC73C\uB85C \uB85C\uADF8\uC778\uB3FC\uC694."), /*#__PURE__*/React.createElement("button", {
+    className: "login-go",
+    style: {
+      marginTop: 16
+    },
+    onClick: onClose
+  }, "\uB2EB\uAE30"))));
+}
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [tab, setTab] = uA(() => localStorage.getItem('hb_tab') || 'home');
@@ -64,7 +153,9 @@ function App() {
   const [compose, setCompose] = uA(false);
   const [welcome, setWelcome] = uA(() => !localStorage.getItem('hb_welcomed'));
   const [joinOpen, setJoinOpen] = uA(false);
+  const [loginOpen, setLoginOpen] = uA(false);
   const [showToast, toastNode] = useToast();
+  const isGuest = !(window.hbAuth && window.hbAuth.isLoggedIn());
   eA(() => {
     localStorage.setItem('hb_tab', tab);
   }, [tab]);
@@ -139,6 +230,15 @@ function App() {
       kind: 'wallet'
     }]),
     openJoin: () => setJoinOpen(true),
+    isGuest,
+    login: () => setLoginOpen(true),
+    logout: () => window.hbAuth && window.hbAuth.logout(),
+    requireLogin: () => {
+      if (!isGuest) return true;
+      setLoginOpen(true);
+      showToast('로그인하고 함께해요 🎈');
+      return false;
+    },
     back: () => setNav(s => s.slice(0, -1)),
     toggleFollow: toggleIn(setFollowing),
     toggleLike: toggleIn(setLiked),
@@ -151,7 +251,12 @@ function App() {
       setGroups(prev => new Set([...prev, g.id]));
     },
     addPost: p => setPosts(prev => [p, ...prev]),
-    openCompose: () => setCompose(true),
+    openCompose: () => {
+      if (!isGuest) setCompose(true);else {
+        setLoginOpen(true);
+        showToast('로그인하고 글을 남겨요 🎈');
+      }
+    },
     toast: showToast
   };
   const overlay = nav[nav.length - 1];
@@ -233,7 +338,10 @@ function App() {
     size: 22
   }), /*#__PURE__*/React.createElement("span", {
     className: "dot"
-  })), /*#__PURE__*/React.createElement("button", {
+  })), isGuest ? /*#__PURE__*/React.createElement("button", {
+    className: "login-btn",
+    onClick: app.login
+  }, "\uB85C\uADF8\uC778") : /*#__PURE__*/React.createElement("button", {
     className: "avatar-btn",
     onClick: () => app.switchTab('me')
   }, ME.name[0])))), /*#__PURE__*/React.createElement("main", {
@@ -295,6 +403,9 @@ function App() {
   }), joinOpen && /*#__PURE__*/React.createElement(JoinBizModal, {
     app: app,
     onClose: () => setJoinOpen(false)
+  }), loginOpen && /*#__PURE__*/React.createElement(LoginModal, {
+    app: app,
+    onClose: () => setLoginOpen(false)
   }), welcome && /*#__PURE__*/React.createElement(WelcomeModal, {
     app: app,
     onClose: () => {

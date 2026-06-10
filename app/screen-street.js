@@ -148,7 +148,15 @@ function MiniHome({
     }
   }), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost mh-official",
-    onClick: () => app.toast('공식 사이트로 이동 (예약·구매)')
+    disabled: !biz.official,
+    onClick: () => {
+      if (!biz.official) {
+        app.toast('공식 사이트가 등록되지 않았어요');
+        return;
+      }
+      const url = /^https?:\/\//.test(biz.official) ? biz.official : `https://${biz.official}`;
+      window.open(url, '_blank', 'noopener');
+    }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "link",
     size: 16,

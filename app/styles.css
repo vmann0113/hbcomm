@@ -1187,3 +1187,35 @@ body{
   .br-thumb{ width:88px; height:88px; }
   .br-title{ font-size:15px; }
 }
+
+/* ════════════ 로그인 ════════════ */
+.login-btn{ flex-shrink:0; font-size:14px; font-weight:800; color:#fff; background:var(--grape);
+  border:none; cursor:pointer; font-family:var(--font); padding:10px 18px; border-radius:999px; white-space:nowrap;
+  box-shadow:0 4px 12px rgba(124,92,252,0.3); transition:transform .16s var(--bounce); }
+.login-btn:active{ transform:scale(.93); }
+.login-sheet{ position:relative; max-width:380px; padding:30px 26px 26px; text-align:center; }
+.login-x{ position:absolute; top:14px; right:16px; width:30px; height:30px; border:none; background:var(--surface-2);
+  border-radius:50%; cursor:pointer; font-size:13px; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; }
+.login-emoji{ font-size:44px; animation:bob 2.6s ease-in-out infinite; }
+.login-title{ font-family:var(--font-display); font-size:23px; color:var(--ink); margin-top:10px; }
+.login-sub{ font-size:14px; color:var(--ink-soft); margin-top:7px; line-height:1.5; }
+.login-body{ margin-top:22px; }
+.kakao-btn{ width:100%; display:flex; align-items:center; justify-content:center; gap:9px;
+  background:#FEE500; color:#3a2929; border:none; cursor:pointer; font-family:var(--font);
+  font-size:15.5px; font-weight:800; padding:14px; border-radius:14px; transition:transform .16s var(--bounce); }
+.kakao-btn:active{ transform:scale(.97); }
+.kakao-ic{ font-size:17px; }
+.login-or{ display:flex; align-items:center; gap:12px; margin:18px 2px; color:var(--ink-faint); font-size:12.5px; }
+.login-or::before, .login-or::after{ content:""; flex:1; height:1px; background:var(--line); }
+.login-input{ width:100%; text-align:center; }
+.login-err{ font-size:12.5px; color:#d9486b; margin-top:9px; }
+.login-go{ width:100%; margin-top:12px; background:var(--grape); color:#fff; border:none; cursor:pointer;
+  font-family:var(--font); font-size:15px; font-weight:800; padding:14px; border-radius:14px;
+  transition:transform .16s var(--bounce); }
+.login-go:active{ transform:scale(.97); }
+.login-go:disabled{ opacity:.6; cursor:default; }
+.login-hint{ font-size:12px; color:var(--ink-faint); margin-top:14px; line-height:1.5; }
+.login-sent{ margin-top:18px; }
+.login-sent-emoji{ font-size:44px; }
+.login-sent-t{ font-family:var(--font-display); font-size:20px; color:var(--ink); margin-top:10px; }
+.login-sent-s{ font-size:14px; color:var(--ink-soft); margin-top:8px; line-height:1.55; }
