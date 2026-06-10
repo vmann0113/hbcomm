@@ -158,7 +158,7 @@ window.hbAuth = {
   user: null,
   profile: null,
   ready: false,
-  reactions: { likes: [], scraps: [] },
+  reactions: { likes: [], scraps: [], groups: [] },
   isLoggedIn() { return !!window.hbAuth.user; },
   displayName() {
     const a = window.hbAuth;
@@ -223,18 +223,22 @@ function hbApplyUserToME(profile, user) {
   }
 }
 
-// 로그인 사용자의 좋아요/스크랩을 불러와 앱이 초기 상태로 쓰게 함
+// 로그인 사용자의 좋아요/스크랩 + 소모임 멤버십을 불러옴
 async function hbLoadReactions(user) {
-  const out = { likes: [], scraps: [] };
+  const out = { likes: [], scraps: [], groups: [] };
   if (!hbSb || !user) return out;
   try {
     const r = await hbSb.from('user_reactions').select('post_id, kind').eq('user_id', user.id);
-    if (r.error) { console.warn('[reactions]', r.error.message); return out; }
-    (r.data || []).forEach((row) => {
+    if (r.error) { console.warn('[reactions]', r.error.message); }
+    else (r.data || []).forEach((row) => {
       if (row.kind === 'like') out.likes.push(row.post_id);
       else if (row.kind === 'scrap') out.scraps.push(row.post_id);
     });
   } catch (e) { console.warn('[reactions] 로드 실패', e); }
+  try {
+    const g = await hbSb.from('group_members').select('group_id').eq('user_id', user.id);
+    if (!g.error) (g.data || []).forEach((row) => out.groups.push(row.group_id));
+  } catch (e) { console.warn('[memberships] 로드 실패', e); }
   return out;
 }
 
@@ -297,6 +301,47 @@ window.hbData = {
     }
     return hbSb.from('user_reactions').delete()
       .eq('user_id', window.hbAuth.user.id).eq('post_id', postId).eq('kind', kind);
+  },
+  // ── 소모임 ──
+  // 새 모임 만들기 → groups insert (status='pending', 운영자 승인 대기)
+  async addGroup({ id, name, emoji, topic, cls, desc, about }) {
+    if (!hbSb || !window.hbAuth.user) return { error: { message: '로그인이 필요해요' } };
+    return hbSb.from('groups').insert({
+      id, name, emoji, topic, cls, descr: desc || '', about: about || '',
+      notice: '', members: 1, status: 'pending',
+      owner_name: window.hbAuth.displayName(), owner_id: window.hbAuth.user.id,
+    }).select('*').maybeSingle();
+  },
+  // 모임 가입/탈퇴
+  async setGroupMembership(groupId, on) {
+    if (!hbSb || !window.hbAuth.user) return { error: { message: '로그인이 필요해요' } };
+    if (on) {
+      return hbSb.from('group_members').upsert(
+        { user_id: window.hbAuth.user.id, group_id: groupId },
+        { onConflict: 'user_id,group_id' }
+      );
+    }
+    return hbSb.from('group_members').delete()
+      .eq('user_id', window.hbAuth.user.id).eq('group_id', groupId);
+  },
+  // 모임 게시판 글 불러오기
+  async loadGroupPosts(groupId) {
+    if (!hbSb) return null;
+    const r = await hbSb.from('group_posts').select('*').eq('group_id', groupId).order('created_at', { ascending: false });
+    if (r.error) { console.warn('[group_posts]', r.error.message); return null; }
+    return (r.data || []).map((p) => ({
+      id: p.id, author: p.author || '익명', time: hbTimeAgo(p.created_at),
+      body: p.body || '', image: p.image || null, likes: p.likes || 0, comments: p.comments || 0, pin: !!p.pinned,
+    }));
+  },
+  // 모임 게시판 글 작성 (image: Storage URL 또는 null)
+  async addGroupPost(groupId, body, image) {
+    if (!hbSb || !window.hbAuth.user) return { error: { message: '로그인이 필요해요' } };
+    return hbSb.from('group_posts').insert({
+      group_id: groupId, body: (body || '').trim(), image: image || null,
+      author: window.hbAuth.displayName(), author_id: window.hbAuth.user.id,
+      likes: 0, comments: 0, pinned: false,
+    }).select('*').maybeSingle();
   },
 };
 

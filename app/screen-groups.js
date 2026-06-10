@@ -19,18 +19,39 @@ function CreateGroupModal({
   const [topic, setTopic] = uG('wedding');
   const [desc, setDesc] = uG('');
   const [about, setAbout] = uG('');
-  const submit = () => {
+  const [busy, setBusy] = uG(false);
+  const submit = async () => {
     if (!name.trim()) {
       app.toast('모임 이름을 입력해주세요');
       return;
     }
+    if (busy) return;
+    if (app.isGuest) {
+      onClose();
+      app.login();
+      app.toast('로그인하고 모임을 만들어요 🎈');
+      return;
+    }
+    setBusy(true);
     const id = 'ug' + Date.now();
-    app.addGroup({
+    const cls = topicToCls[topic] || 'grape';
+    const res = await app.saveGroup({
       id,
       name: name.trim(),
       emoji,
+      topic,
+      cls,
+      desc: desc.trim() || '새로 만든 모임이에요',
+      about: about.trim() || `${name.trim()} 모임이에요. 함께 이야기 나눠요!`
+    });
+    setBusy(false);
+    const saved = res && res.data;
+    app.addGroup({
+      id: saved ? saved.id : id,
+      name: name.trim(),
+      emoji,
       members: 1,
-      cls: topicToCls[topic] || 'grape',
+      cls,
       topic,
       desc: desc.trim() || '새로 만든 모임이에요',
       about: about.trim() || `${name.trim()} 모임이에요. 함께 이야기 나눠요!`,
@@ -39,9 +60,9 @@ function CreateGroupModal({
       status: 'pending',
       ownerName: ME.name
     });
-    app.toast('모임 신청 완료! 운영자 승인 후 공개돼요 🎉');
+    app.toast(res && res.error ? '화면엔 보이지만 저장은 실패했어요' : '모임 신청 완료! 운영자 승인 후 공개돼요 🎉');
     onClose();
-    app.openGroup(id);
+    app.openGroup(saved ? saved.id : id);
   };
   return /*#__PURE__*/React.createElement("div", {
     className: "sheet-wrap",
@@ -281,6 +302,19 @@ function GroupRoom({
   const [draft, setDraft] = uG('');
   const [img, setImg] = uG(null);
   const fileRef = React.useRef();
+
+  // Supabase에서 이 모임의 게시글 불러오기 (있으면 데모 대체)
+  React.useEffect(() => {
+    let alive = true;
+    if (group && window.hbData && window.hbData.loadGroupPosts) {
+      window.hbData.loadGroupPosts(groupId).then(rows => {
+        if (alive && rows) setPosts(rows);
+      });
+    }
+    return () => {
+      alive = false;
+    };
+  }, [groupId]);
   if (!group) return null;
   const joined = app.groups.has(groupId);
   const pending = group.status === 'pending';
@@ -292,24 +326,32 @@ function GroupRoom({
     r.onload = () => setImg(r.result);
     r.readAsDataURL(f);
   };
-  const submit = () => {
+  const submit = async () => {
     if (!joined) {
       app.toast('먼저 모임에 가입해주세요');
       return;
     }
     if (!draft.trim() && !img) return;
+    if (!app.requireLogin()) return;
+    const body = draft.trim();
+    const res = window.hbData ? await window.hbData.addGroupPost(groupId, body, null) : {
+      error: {
+        message: 'no server'
+      }
+    };
+    const saved = res && res.data;
     setPosts([{
-      id: 'gpx' + Date.now(),
+      id: saved ? saved.id : 'gpx' + Date.now(),
       author: ME.name,
       time: '방금',
-      body: draft.trim(),
+      body,
       image: img,
       likes: 0,
       comments: 0
     }, ...posts]);
     setDraft('');
     setImg(null);
-    app.toast('모임에 글을 남겼어요 ✏️');
+    app.toast(res && res.error ? '화면엔 보이지만 저장은 실패했어요' : '모임에 글을 남겼어요 ✏️');
   };
   const toggle = () => {
     app.toggleGroup(groupId);

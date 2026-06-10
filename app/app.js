@@ -304,7 +304,7 @@ function App() {
   const [liked, setLiked] = uA(() => loggedInNow ? new Set(seedReactions.likes) : loadSet('hb_like', []));
   const [scraps, setScraps] = uA(() => loggedInNow ? new Set([...(ME.scraps || []), ...seedReactions.scraps]) : loadSet('hb_scrap', ME.scraps));
   const [checked, setChecked] = uA(() => loadSet('hb_check', ['k1', 'k2', 'k3']));
-  const [groups, setGroups] = uA(() => loadSet('hb_groups', ME.groups));
+  const [groups, setGroups] = uA(() => loggedInNow ? new Set(seedReactions.groups) : loadSet('hb_groups', ME.groups));
   const [posts, setPosts] = uA([...POSTS]);
   const [compose, setCompose] = uA(false);
   const [welcome, setWelcome] = uA(() => !localStorage.getItem('hb_welcomed'));
@@ -411,12 +411,22 @@ function App() {
       if (window.hbData) window.hbData.setReaction(id, 'scrap', on);
     },
     toggleCheck: toggleIn(setChecked),
-    toggleGroup: toggleIn(setGroups),
+    toggleGroup: id => {
+      if (!app.requireLogin()) return;
+      const on = !groups.has(id);
+      toggleIn(setGroups)(id);
+      if (window.hbData) window.hbData.setGroupMembership(id, on);
+    },
     addGroup: g => {
       GROUPS.unshift(g);
       GROUP_POSTS[g.id] = [];
       setGroups(prev => new Set([...prev, g.id]));
     },
+    saveGroup: fields => window.hbData ? window.hbData.addGroup(fields) : Promise.resolve({
+      error: {
+        message: '서버 미연결'
+      }
+    }),
     addPost: p => setPosts(prev => [p, ...prev]),
     savePost: fields => window.hbData ? window.hbData.addPost(fields) : Promise.resolve({
       error: {
