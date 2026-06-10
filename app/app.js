@@ -334,4 +334,7 @@ function App() {
 Object.assign(window, {
   App
 });
-ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
+// Supabase 콘텐츠 로딩이 끝난 뒤 렌더 (로더 없으면 즉시 렌더)
+(window.__hbReady || Promise.resolve()).then(() => {
+  ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
+});
