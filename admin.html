@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HANBEAM LIFE · 관리자</title>
+<link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin />
+<link href="https://fastly.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="app/styles.css" />
+<link rel="stylesheet" href="app/admin.css" />
+</head>
+<body>
+  <div id="root"></div>
+
+  <template id="__bundler_thumbnail">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" fill="#2a2622"/>
+      <rect x="22" y="30" width="56" height="9" rx="4" fill="#4b867f"/>
+      <rect x="22" y="46" width="40" height="7" rx="3" fill="#f7f5f0"/>
+      <rect x="22" y="59" width="48" height="7" rx="3" fill="#f7f5f0"/>
+    </svg>
+  </template>
+
+  <!-- React (로컬 호스팅 · CDN 의존성 없음) -->
+  <script src="vendor/react.production.min.js"></script>
+  <script src="vendor/react-dom.production.min.js"></script>
+
+  <!-- 빌드 산출물(.js). 소스는 동명의 .jsx. Babel 런타임 불필요. -->
+  <script src="app/data.js"></script>
+  <script src="app/ui.js"></script>
+  <script src="app/admin-data.js"></script>
+  <script src="app/admin-sections.js"></script>
+  <script src="app/admin.js"></script>
+</body>
+</html>
