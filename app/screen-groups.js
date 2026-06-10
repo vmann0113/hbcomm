@@ -196,7 +196,6 @@ function GroupsScreen({
 }) {
   const [tab, setTab] = uG('mine');
   const [cat, setCat] = uG('all');
-  const [creating, setCreating] = uG(false);
   const joinedIds = app.groups;
   const mine = GROUPS.filter(g => joinedIds.has(g.id));
   const reco = GROUPS.filter(g => !joinedIds.has(g.id) && g.status !== 'pending' && (ME.favTopics.includes(g.topic) || g.topic === 'wedding'));
@@ -218,7 +217,7 @@ function GroupsScreen({
     className: "page-sub"
   }, "\uAC19\uC740 \uC2DC\uAE30, \uAC19\uC740 \uAD00\uC2EC\uC0AC\uB97C \uAC00\uC9C4 \uC0AC\uB78C\uB4E4\uACFC \uD568\uAED8\uD574\uC694.")), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-primary groups-make",
-    onClick: () => setCreating(true)
+    onClick: () => app.openCreateGroup()
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 16,
@@ -271,7 +270,7 @@ function GroupsScreen({
     style: {
       padding: '11px 20px'
     },
-    onClick: () => setCreating(true)
+    onClick: () => app.openCreateGroup()
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 16,
@@ -286,10 +285,7 @@ function GroupsScreen({
     onToggle: toggle
   }))), tab === 'reco' && /*#__PURE__*/React.createElement("div", {
     className: "board-note"
-  }, "\uB098\uC758 \uB2E8\uACC4(\uACB0\uD63C\uC900\uBE44)\uC640 \uAD00\uC2EC \uC8FC\uC81C\uC5D0 \uB9DE\uCDB0 \uCD94\uCC9C\uD588\uC5B4\uC694 \xB7 \uAC00\uC785\uD558\uBA74 \u2018\uB0B4 \uBAA8\uC784\u2019\uC5D0 \uB2F4\uACA8\uC694."), creating && /*#__PURE__*/React.createElement(CreateGroupModal, {
-    app: app,
-    onClose: () => setCreating(false)
-  }));
+  }, "\uB098\uC758 \uB2E8\uACC4(\uACB0\uD63C\uC900\uBE44)\uC640 \uAD00\uC2EC \uC8FC\uC81C\uC5D0 \uB9DE\uCDB0 \uCD94\uCC9C\uD588\uC5B4\uC694 \xB7 \uAC00\uC785\uD558\uBA74 \u2018\uB0B4 \uBAA8\uC784\u2019\uC5D0 \uB2F4\uACA8\uC694."));
 }
 
 // ── 개별 모임 방 ─────────────────────────────────────────────

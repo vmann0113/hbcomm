@@ -311,6 +311,7 @@ function App() {
   const [joinOpen, setJoinOpen] = uA(false);
   const [loginOpen, setLoginOpen] = uA(false);
   const [onboard, setOnboard] = uA(() => !!(window.hbAuth && window.hbAuth.needsOnboarding && window.hbAuth.needsOnboarding()));
+  const [createGroup, setCreateGroup] = uA(false);
   const [showToast, toastNode] = useToast();
   const isGuest = !(window.hbAuth && window.hbAuth.isLoggedIn());
   eA(() => {
@@ -387,6 +388,12 @@ function App() {
       kind: 'wallet'
     }]),
     openJoin: () => setJoinOpen(true),
+    openCreateGroup: () => {
+      if (!isGuest) setCreateGroup(true);else {
+        setLoginOpen(true);
+        showToast('로그인하고 모임을 만들어요 🎈');
+      }
+    },
     isGuest,
     login: () => setLoginOpen(true),
     logout: () => window.hbAuth && window.hbAuth.logout(),
@@ -591,6 +598,9 @@ function App() {
   }), onboard && /*#__PURE__*/React.createElement(OnboardingModal, {
     app: app,
     onDone: () => setOnboard(false)
+  }), createGroup && /*#__PURE__*/React.createElement(CreateGroupModal, {
+    app: app,
+    onClose: () => setCreateGroup(false)
   }), welcome && /*#__PURE__*/React.createElement(WelcomeModal, {
     app: app,
     onClose: () => {
