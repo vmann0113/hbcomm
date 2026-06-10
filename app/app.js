@@ -58,7 +58,8 @@ function LoginModal({
   onClose
 }) {
   const [email, setEmail] = uA('');
-  const [sent, setSent] = uA(false);
+  const [code, setCode] = uA('');
+  const [step, setStep] = uA('email'); // email → code
   const [busy, setBusy] = uA(false);
   const [err, setErr] = uA('');
   const submitEmail = async () => {
@@ -74,7 +75,23 @@ function LoginModal({
       setErr(res.error.message || '잠시 후 다시 시도해주세요');
       return;
     }
-    setSent(true);
+    setStep('code');
+  };
+  const submitCode = async () => {
+    const c = (code || '').replace(/\D/g, '');
+    if (c.length < 6) {
+      setErr('메일로 받은 6자리 코드를 입력해주세요');
+      return;
+    }
+    setBusy(true);
+    setErr('');
+    const res = await window.hbAuth.verifyEmailCode(email, c);
+    setBusy(false);
+    if (res && res.error) {
+      setErr('코드가 올바르지 않거나 만료됐어요. 다시 확인해주세요');
+      return;
+    }
+    location.reload(); // 세션 적용
   };
   const kakao = async () => {
     setErr('');
@@ -99,7 +116,7 @@ function LoginModal({
     className: "login-title"
   }, "\uD55C\uBE54\uCEE4\uBBA4\uB2C8\uD2F0 \uC2DC\uC791\uD558\uAE30"), /*#__PURE__*/React.createElement("div", {
     className: "login-sub"
-  }, "\uB85C\uADF8\uC778\uD558\uBA74 \uAE00\xB7\uD6C4\uAE30\xB7\uC18C\uBAA8\uC784\uC744 \uD568\uAED8\uD560 \uC218 \uC788\uC5B4\uC694")), !sent ? /*#__PURE__*/React.createElement("div", {
+  }, "\uB85C\uADF8\uC778\uD558\uBA74 \uAE00\xB7\uD6C4\uAE30\xB7\uC18C\uBAA8\uC784\uC744 \uD568\uAED8\uD560 \uC218 \uC788\uC5B4\uC694")), step === 'email' ? /*#__PURE__*/React.createElement("div", {
     className: "login-body"
   }, /*#__PURE__*/React.createElement("button", {
     className: "kakao-btn",
@@ -122,23 +139,148 @@ function LoginModal({
     className: "login-go",
     disabled: busy,
     onClick: submitEmail
-  }, busy ? '보내는 중…' : '로그인 링크 받기'), /*#__PURE__*/React.createElement("div", {
+  }, busy ? '보내는 중…' : '인증 코드 받기'), /*#__PURE__*/React.createElement("div", {
     className: "login-hint"
-  }, "\uC785\uB825\uD55C \uC774\uBA54\uC77C\uB85C \uB85C\uADF8\uC778 \uB9C1\uD06C\uB97C \uBCF4\uB0B4\uB4DC\uB824\uC694. \uBE44\uBC00\uBC88\uD638\uAC00 \uC5C6\uC5B4\uC694.")) : /*#__PURE__*/React.createElement("div", {
-    className: "login-sent"
+  }, "\uC785\uB825\uD55C \uC774\uBA54\uC77C\uB85C ", /*#__PURE__*/React.createElement("b", null, "6\uC790\uB9AC \uCF54\uB4DC"), "\uB97C \uBCF4\uB0B4\uB4DC\uB824\uC694. \uBE44\uBC00\uBC88\uD638\uAC00 \uC5C6\uC5B4\uC694.")) : /*#__PURE__*/React.createElement("div", {
+    className: "login-body"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "login-sent-emoji"
-  }, "\uD83D\uDCEC"), /*#__PURE__*/React.createElement("div", {
-    className: "login-sent-t"
-  }, "\uBA54\uC77C\uC744 \uD655\uC778\uD574\uC8FC\uC138\uC694!"), /*#__PURE__*/React.createElement("div", {
-    className: "login-sent-s"
-  }, /*#__PURE__*/React.createElement("b", null, email), " \uB85C \uB85C\uADF8\uC778 \uB9C1\uD06C\uB97C \uBCF4\uB0C8\uC5B4\uC694. \uB9C1\uD06C\uB97C \uB204\uB974\uBA74 \uC790\uB3D9\uC73C\uB85C \uB85C\uADF8\uC778\uB3FC\uC694."), /*#__PURE__*/React.createElement("button", {
+    className: "login-code-to"
+  }, "\uD83D\uDCEC ", /*#__PURE__*/React.createElement("b", null, email), " \uB85C \uBCF4\uB0B8", /*#__PURE__*/React.createElement("br", null), "6\uC790\uB9AC \uCF54\uB4DC\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694"), /*#__PURE__*/React.createElement("input", {
+    className: "sheet-input login-input login-code",
+    type: "text",
+    inputMode: "numeric",
+    maxLength: 6,
+    placeholder: "\u25CF \u25CF \u25CF \u25CF \u25CF \u25CF",
+    value: code,
+    onChange: e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6)),
+    onKeyDown: e => e.key === 'Enter' && submitCode(),
+    autoFocus: true
+  }), err && /*#__PURE__*/React.createElement("div", {
+    className: "login-err"
+  }, err), /*#__PURE__*/React.createElement("button", {
     className: "login-go",
+    disabled: busy,
+    onClick: submitCode
+  }, busy ? '확인 중…' : '로그인'), /*#__PURE__*/React.createElement("button", {
+    className: "login-link-btn",
+    onClick: () => {
+      setStep('email');
+      setCode('');
+      setErr('');
+    }
+  }, "\u2190 \uC774\uBA54\uC77C \uB2E4\uC2DC \uC785\uB825"), /*#__PURE__*/React.createElement("div", {
+    className: "login-hint"
+  }, "\uBA54\uC77C\uC774 \uC548 \uBCF4\uC774\uBA74 \uC2A4\uD338\uD568\uB3C4 \uD655\uC778\uD574\uC8FC\uC138\uC694. \uCF54\uB4DC \uB300\uC2E0 \uBA54\uC77C \uC18D \uB9C1\uD06C\uB97C \uB20C\uB7EC\uB3C4 \uB85C\uADF8\uC778\uB3FC\uC694."))));
+}
+
+// ── 첫 로그인 온보딩 (고객 정보 수집 → profiles 저장) ────────────
+function OnboardingModal({
+  app,
+  onDone
+}) {
+  const prof = window.hbAuth && window.hbAuth.profile || {};
+  const authUser = window.hbAuth && window.hbAuth.user || {};
+  const [name, setName] = uA(prof.name && prof.name !== '회원' ? prof.name : '');
+  const [phone, setPhone] = uA(prof.phone || '');
+  const [email, setEmail] = uA(prof.email || authUser.email || '');
+  const [dateType, setDateType] = uA(prof.date_type || 'wedding');
+  const [date, setDate] = uA(prof.wedding_date || '');
+  const [busy, setBusy] = uA(false);
+  const [err, setErr] = uA('');
+  const save = async skip => {
+    if (!skip && !name.trim()) {
+      setErr('이름(또는 닉네임)을 입력해주세요');
+      return;
+    }
+    setBusy(true);
+    setErr('');
+    const fields = skip ? {} : {
+      name: name.trim() || prof.name || '회원',
+      phone: phone.trim() || null,
+      email: email.trim() || null,
+      date_type: dateType,
+      wedding_date: date || null
+    };
+    const res = await window.hbAuth.saveProfile(fields);
+    setBusy(false);
+    if (res && res.error) {
+      setErr('저장에 실패했어요. 잠시 후 다시 시도해주세요');
+      return;
+    }
+    app.toast(skip ? '환영해요! 🎈' : '환영해요! 정보가 저장됐어요 🎉');
+    onDone();
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "sheet-wrap"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "sheet onb-sheet",
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "login-head"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "login-emoji"
+  }, "\uD83C\uDF89"), /*#__PURE__*/React.createElement("div", {
+    className: "login-title"
+  }, "\uBC18\uAC00\uC6CC\uC694! \uAC70\uC758 \uB2E4 \uB410\uC5B4\uC694"), /*#__PURE__*/React.createElement("div", {
+    className: "login-sub"
+  }, "\uB9DE\uCDA4 \uC815\uBCF4\uB97C \uC704\uD574 \uBA87 \uAC00\uC9C0\uB9CC \uC54C\uB824\uC8FC\uC138\uC694")), /*#__PURE__*/React.createElement("div", {
+    className: "onb-body"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "onb-label"
+  }, "\uC774\uB984 \uB610\uB294 \uB2C9\uB124\uC784 ", /*#__PURE__*/React.createElement("span", {
+    className: "onb-req"
+  }, "\uD544\uC218")), /*#__PURE__*/React.createElement("input", {
+    className: "sheet-input",
+    placeholder: "\uC608) \uAE40\uD0DC\uD604",
+    value: name,
+    onChange: e => setName(e.target.value)
+  }), /*#__PURE__*/React.createElement("label", {
+    className: "onb-label"
+  }, "\uC5F0\uB77D\uCC98"), /*#__PURE__*/React.createElement("input", {
+    className: "sheet-input",
+    type: "tel",
+    inputMode: "tel",
+    placeholder: "010-0000-0000",
+    value: phone,
+    onChange: e => setPhone(e.target.value)
+  }), /*#__PURE__*/React.createElement("label", {
+    className: "onb-label"
+  }, "\uC774\uBA54\uC77C"), /*#__PURE__*/React.createElement("input", {
+    className: "sheet-input",
+    type: "email",
+    inputMode: "email",
+    placeholder: "\uC774\uBA54\uC77C \uC8FC\uC18C",
+    value: email,
+    onChange: e => setEmail(e.target.value)
+  }), /*#__PURE__*/React.createElement("label", {
+    className: "onb-label"
+  }, "\uAE30\uB150\uC77C"), /*#__PURE__*/React.createElement("div", {
+    className: "onb-seg"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: `onb-seg-btn ${dateType === 'wedding' ? 'on' : ''}`,
+    onClick: () => setDateType('wedding')
+  }, "\uACB0\uD63C \uC608\uC815\uC77C"), /*#__PURE__*/React.createElement("button", {
+    className: `onb-seg-btn ${dateType === 'anniversary' ? 'on' : ''}`,
+    onClick: () => setDateType('anniversary')
+  }, "\uAE30\uB150\uC77C")), /*#__PURE__*/React.createElement("input", {
+    className: "sheet-input",
+    type: "date",
+    value: date,
+    onChange: e => setDate(e.target.value)
+  }), err && /*#__PURE__*/React.createElement("div", {
+    className: "login-err"
+  }, err), /*#__PURE__*/React.createElement("button", {
+    className: "login-go",
+    disabled: busy,
+    onClick: () => save(false),
     style: {
       marginTop: 16
-    },
-    onClick: onClose
-  }, "\uB2EB\uAE30"))));
+    }
+  }, busy ? '저장 중…' : '시작하기'), /*#__PURE__*/React.createElement("button", {
+    className: "login-link-btn",
+    onClick: () => save(true),
+    disabled: busy
+  }, "\uB098\uC911\uC5D0 \uC785\uB825\uD560\uAC8C\uC694"))));
 }
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
@@ -154,6 +296,7 @@ function App() {
   const [welcome, setWelcome] = uA(() => !localStorage.getItem('hb_welcomed'));
   const [joinOpen, setJoinOpen] = uA(false);
   const [loginOpen, setLoginOpen] = uA(false);
+  const [onboard, setOnboard] = uA(() => !!(window.hbAuth && window.hbAuth.needsOnboarding && window.hbAuth.needsOnboarding()));
   const [showToast, toastNode] = useToast();
   const isGuest = !(window.hbAuth && window.hbAuth.isLoggedIn());
   eA(() => {
@@ -406,6 +549,9 @@ function App() {
   }), loginOpen && /*#__PURE__*/React.createElement(LoginModal, {
     app: app,
     onClose: () => setLoginOpen(false)
+  }), onboard && /*#__PURE__*/React.createElement(OnboardingModal, {
+    app: app,
+    onDone: () => setOnboard(false)
   }), welcome && /*#__PURE__*/React.createElement(WelcomeModal, {
     app: app,
     onClose: () => {
@@ -445,7 +591,6 @@ function App() {
 Object.assign(window, {
   App
 });
-// Supabase 콘텐츠 로딩이 끝난 뒤 렌더 (로더 없으면 즉시 렌더)
 (window.__hbReady || Promise.resolve()).then(() => {
   ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
 });

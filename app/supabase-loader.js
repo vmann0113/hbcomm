@@ -167,11 +167,26 @@ window.hbAuth = {
     if (!hbSb) return { error: { message: '서버에 연결되어 있지 않아요' } };
     return hbSb.auth.signInWithOtp({ email: (email || '').trim(), options: { emailRedirectTo: hbAuthCleanRedirect() } });
   },
+  async verifyEmailCode(email, token) {
+    if (!hbSb) return { error: { message: '서버에 연결되어 있지 않아요' } };
+    return hbSb.auth.verifyOtp({ email: (email || '').trim(), token: (token || '').trim(), type: 'email' });
+  },
   async loginKakao() {
     if (!hbSb) return { error: { message: '서버에 연결되어 있지 않아요' } };
     return hbSb.auth.signInWithOAuth({ provider: 'kakao', options: { redirectTo: hbAuthCleanRedirect() } });
   },
   async logout() { if (hbSb) await hbSb.auth.signOut(); location.reload(); },
+  needsOnboarding() {
+    const a = window.hbAuth;
+    return a.isLoggedIn() && a.profile && !a.profile.onboarded;
+  },
+  async saveProfile(fields) {
+    if (!hbSb || !window.hbAuth.user) return { error: { message: '로그인이 필요해요' } };
+    const res = await hbSb.from('profiles').update({ ...fields, onboarded: true })
+      .eq('id', window.hbAuth.user.id).select('*').maybeSingle();
+    if (!res.error && res.data) { window.hbAuth.profile = res.data; hbApplyUserToME(res.data, window.hbAuth.user); }
+    return res;
+  },
 };
 
 async function hbFetchOrCreateProfile(user) {
