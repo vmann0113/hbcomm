@@ -82,7 +82,16 @@ const BUSINESSES = [{
   cover: '가족여행 커버',
   logo: '가온'
 }];
-const bizById = id => BUSINESSES.find(b => b.id === id);
+const bizById = id => BUSINESSES.find(b => b.id === id) || {
+  id,
+  name: '',
+  topic: 'wedding',
+  intro: '',
+  official: '',
+  followers: 0,
+  logo: '',
+  cover: ''
+};
 
 // ── 업체 소식 (news) · type: newproduct / event / daily ──────
 // signal=true 인 항목만 '불 켜짐'
