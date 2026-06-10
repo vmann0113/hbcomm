@@ -93,10 +93,8 @@ function LoginModal({
     }
     location.reload(); // 세션 적용
   };
-  const kakao = async () => {
-    setErr('');
-    const res = await window.hbAuth.loginKakao();
-    if (res && res.error) setErr(res.error.message || '카카오 로그인을 사용할 수 없어요');
+  const kakao = () => {
+    app.toast('카카오 로그인은 준비 중이에요 · 이메일로 시작해주세요 🙂');
   };
   return /*#__PURE__*/React.createElement("div", {
     className: "sheet-wrap",
@@ -119,11 +117,13 @@ function LoginModal({
   }, "\uB85C\uADF8\uC778\uD558\uBA74 \uAE00\xB7\uD6C4\uAE30\xB7\uC18C\uBAA8\uC784\uC744 \uD568\uAED8\uD560 \uC218 \uC788\uC5B4\uC694")), step === 'email' ? /*#__PURE__*/React.createElement("div", {
     className: "login-body"
   }, /*#__PURE__*/React.createElement("button", {
-    className: "kakao-btn",
+    className: "kakao-btn soon",
     onClick: kakao
   }, /*#__PURE__*/React.createElement("span", {
     className: "kakao-ic"
-  }, "\uD83D\uDCAC"), " \uCE74\uCE74\uC624\uB85C \uC2DC\uC791\uD558\uAE30"), /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDCAC"), " \uCE74\uCE74\uC624\uB85C \uC2DC\uC791\uD558\uAE30 ", /*#__PURE__*/React.createElement("span", {
+    className: "soon-tag"
+  }, "\uC900\uBE44 \uC911")), /*#__PURE__*/React.createElement("div", {
     className: "login-or"
   }, /*#__PURE__*/React.createElement("span", null, "\uB610\uB294 \uC774\uBA54\uC77C\uB85C")), /*#__PURE__*/React.createElement("input", {
     className: "sheet-input login-input",

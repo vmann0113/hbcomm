@@ -1205,6 +1205,8 @@ body{
   font-size:15.5px; font-weight:800; padding:14px; border-radius:14px; transition:transform .16s var(--bounce); }
 .kakao-btn:active{ transform:scale(.97); }
 .kakao-ic{ font-size:17px; }
+.kakao-btn.soon{ background:#f3eefc; color:var(--ink-faint); position:relative; }
+.soon-tag{ font-size:10.5px; font-weight:800; color:#fff; background:var(--ink-faint); padding:2px 7px; border-radius:6px; margin-left:4px; }
 .login-or{ display:flex; align-items:center; gap:12px; margin:18px 2px; color:var(--ink-faint); font-size:12.5px; }
 .login-or::before, .login-or::after{ content:""; flex:1; height:1px; background:var(--line); }
 .login-input{ width:100%; text-align:center; }
