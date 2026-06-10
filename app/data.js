@@ -372,8 +372,8 @@ const IMG = {
 
 // ── 현재 사용자 ──────────────────────────────────────────────
 const ME = {
-  name: '김서연',
-  handle: '@seoyeon',
+  name: '김태현',
+  handle: '@taehyun',
   weddingDate: '2026-10-17',
   following: ['hanbeam', 'maru', 'aidam'],
   // 팔로우한 업체

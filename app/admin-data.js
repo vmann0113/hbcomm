@@ -167,7 +167,7 @@ const REVENUE = [{
 // 사용자 (시드 + 오가닉)
 const USERS = [{
   id: 'u1',
-  name: '김서연',
+  name: '김태현',
   phone: '010-2841-77**',
   wedding: '2026-10-17',
   joined: '2026-01-08',
