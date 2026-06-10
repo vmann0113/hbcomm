@@ -295,9 +295,14 @@ function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [tab, setTab] = uA(() => localStorage.getItem('hb_tab') || 'home');
   const [nav, setNav] = uA([]);
+  const loggedInNow = !!(window.hbAuth && window.hbAuth.isLoggedIn());
+  const seedReactions = window.hbAuth && window.hbAuth.reactions || {
+    likes: [],
+    scraps: []
+  };
   const [following, setFollowing] = uA(() => loadSet('hb_follow', ME.following));
-  const [liked, setLiked] = uA(() => loadSet('hb_like', []));
-  const [scraps, setScraps] = uA(() => loadSet('hb_scrap', ME.scraps));
+  const [liked, setLiked] = uA(() => loggedInNow ? new Set(seedReactions.likes) : loadSet('hb_like', []));
+  const [scraps, setScraps] = uA(() => loggedInNow ? new Set([...(ME.scraps || []), ...seedReactions.scraps]) : loadSet('hb_scrap', ME.scraps));
   const [checked, setChecked] = uA(() => loadSet('hb_check', ['k1', 'k2', 'k3']));
   const [groups, setGroups] = uA(() => loadSet('hb_groups', ME.groups));
   const [posts, setPosts] = uA([...POSTS]);
@@ -393,8 +398,18 @@ function App() {
     },
     back: () => setNav(s => s.slice(0, -1)),
     toggleFollow: toggleIn(setFollowing),
-    toggleLike: toggleIn(setLiked),
-    toggleScrap: toggleIn(setScraps),
+    toggleLike: id => {
+      if (!app.requireLogin()) return;
+      const on = !liked.has(id);
+      toggleIn(setLiked)(id);
+      if (window.hbData) window.hbData.setReaction(id, 'like', on);
+    },
+    toggleScrap: id => {
+      if (!app.requireLogin()) return;
+      const on = !scraps.has(id);
+      toggleIn(setScraps)(id);
+      if (window.hbData) window.hbData.setReaction(id, 'scrap', on);
+    },
     toggleCheck: toggleIn(setChecked),
     toggleGroup: toggleIn(setGroups),
     addGroup: g => {
@@ -403,6 +418,11 @@ function App() {
       setGroups(prev => new Set([...prev, g.id]));
     },
     addPost: p => setPosts(prev => [p, ...prev]),
+    savePost: fields => window.hbData ? window.hbData.addPost(fields) : Promise.resolve({
+      error: {
+        message: '서버 미연결'
+      }
+    }),
     openCompose: () => {
       if (!isGuest) setCompose(true);else {
         setLoginOpen(true);

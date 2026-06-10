@@ -140,19 +140,42 @@ function PostDetail({
   const post = app.posts.find(p => p.id === postId);
   const [cmt, setCmt] = uP('');
   const [localComments, setLocal] = uP(() => commentsOf(postId));
+  const [sending, setSending] = uP(false);
   if (!post) return null;
   const liked = app.liked.has(postId);
   const scrapped = app.scraps.has(postId);
   const taggedBiz = post.tags.map(bizById).filter(Boolean);
-  const submit = () => {
-    if (!cmt.trim()) return;
+
+  // Supabase에서 이 글의 댓글 불러오기 (있으면 데모 댓글 대체)
+  React.useEffect(() => {
+    let alive = true;
+    if (window.hbData && window.hbData.loadComments) {
+      window.hbData.loadComments(postId).then(rows => {
+        if (alive && rows) setLocal(rows);
+      });
+    }
+    return () => {
+      alive = false;
+    };
+  }, [postId]);
+  const submit = async () => {
+    if (!cmt.trim() || sending) return;
+    if (!app.requireLogin()) return;
+    const body = cmt.trim();
+    setSending(true);
+    const res = window.hbData ? await window.hbData.addComment(postId, body) : {
+      error: {
+        message: 'no server'
+      }
+    };
+    setSending(false);
     setLocal([...localComments, {
       user: ME.name,
       time: '방금',
-      body: cmt.trim()
+      body
     }]);
     setCmt('');
-    app.toast('댓글을 남겼어요');
+    app.toast(res && res.error ? '화면엔 보이지만 저장은 실패했어요' : '댓글을 남겼어요');
   };
   const renderBody = text => text.split(/(#[^\s#]+)/g).map((seg, i) => {
     if (seg.startsWith('#')) {

@@ -158,6 +158,7 @@ window.hbAuth = {
   user: null,
   profile: null,
   ready: false,
+  reactions: { likes: [], scraps: [] },
   isLoggedIn() { return !!window.hbAuth.user; },
   displayName() {
     const a = window.hbAuth;
@@ -222,6 +223,21 @@ function hbApplyUserToME(profile, user) {
   }
 }
 
+// 로그인 사용자의 좋아요/스크랩을 불러와 앱이 초기 상태로 쓰게 함
+async function hbLoadReactions(user) {
+  const out = { likes: [], scraps: [] };
+  if (!hbSb || !user) return out;
+  try {
+    const r = await hbSb.from('user_reactions').select('post_id, kind').eq('user_id', user.id);
+    if (r.error) { console.warn('[reactions]', r.error.message); return out; }
+    (r.data || []).forEach((row) => {
+      if (row.kind === 'like') out.likes.push(row.post_id);
+      else if (row.kind === 'scrap') out.scraps.push(row.post_id);
+    });
+  } catch (e) { console.warn('[reactions] 로드 실패', e); }
+  return out;
+}
+
 async function hbBootstrapAuth() {
   if (!hbSb) { if (window.ME) window.ME.isGuest = true; return; }
   try {
@@ -231,6 +247,7 @@ async function hbBootstrapAuth() {
     if (user) {
       window.hbAuth.profile = await hbFetchOrCreateProfile(user);
       hbApplyUserToME(window.hbAuth.profile, user);
+      window.hbAuth.reactions = await hbLoadReactions(user);
     } else if (window.ME) {
       window.ME.isGuest = true;
     }
@@ -240,6 +257,48 @@ async function hbBootstrapAuth() {
   }
   window.hbAuth.ready = true;
 }
+
+// ── 쓰기 (글·댓글·반응) — 로그인 사용자만 ──────────────────────
+window.hbData = {
+  // 새 글 작성 → posts insert. 성공 시 저장된 행(서버 id 포함) 반환
+  async addPost({ topic, type, title, excerpt, body, thumb, tags }) {
+    if (!hbSb || !window.hbAuth.user) return { error: { message: '로그인이 필요해요' } };
+    const row = {
+      topic, type, title, excerpt: excerpt || '', body: body || '',
+      thumb: thumb || null, tags: tags || [],
+      author: window.hbAuth.displayName(), author_id: window.hbAuth.user.id,
+      likes: 0, comments: 0, hidden: false, featured: false,
+    };
+    return hbSb.from('posts').insert(row).select('*').maybeSingle();
+  },
+  // 글의 댓글 불러오기 → 화면용 형태로 변환
+  async loadComments(postId) {
+    if (!hbSb) return null;
+    const r = await hbSb.from('comments').select('*').eq('post_id', postId).order('created_at', { ascending: true });
+    if (r.error) { console.warn('[comments]', r.error.message); return null; }
+    return (r.data || []).map((c) => ({ user: c.author || '익명', time: hbTimeAgo(c.created_at), body: c.body }));
+  },
+  // 댓글 작성
+  async addComment(postId, body) {
+    if (!hbSb || !window.hbAuth.user) return { error: { message: '로그인이 필요해요' } };
+    return hbSb.from('comments').insert({
+      post_id: postId, body: (body || '').trim(),
+      author: window.hbAuth.displayName(), author_id: window.hbAuth.user.id,
+    }).select('*').maybeSingle();
+  },
+  // 좋아요/스크랩 토글 저장 (kind: 'like' | 'scrap')
+  async setReaction(postId, kind, on) {
+    if (!hbSb || !window.hbAuth.user) return { error: { message: '로그인이 필요해요' } };
+    if (on) {
+      return hbSb.from('user_reactions').upsert(
+        { user_id: window.hbAuth.user.id, post_id: postId, kind },
+        { onConflict: 'user_id,post_id,kind' }
+      );
+    }
+    return hbSb.from('user_reactions').delete()
+      .eq('user_id', window.hbAuth.user.id).eq('post_id', postId).eq('kind', kind);
+  },
+};
 
 // 콘텐츠 + 인증 둘 다 준비된 뒤 렌더
 window.__hbReady = Promise.all([hbLoadContent(), hbBootstrapAuth()]);

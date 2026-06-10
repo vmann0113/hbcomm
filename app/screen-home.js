@@ -736,28 +736,47 @@ function ComposeSheet({
   const [type, setType] = uH('review');
   const [title, setTitle] = uH('');
   const [body, setBody] = uH('');
-  const submit = () => {
+  const [busy, setBusy] = uH(false);
+  const submit = async () => {
     if (!title.trim()) {
       app.toast('제목을 입력해주세요');
       return;
     }
+    if (busy) return;
+    setBusy(true);
+    const excerpt = (body.trim() || '방금 올린 글이에요').slice(0, 60);
+    const tags = (body.match(/#[^\s#]+/g) || []).map(t => {
+      const b = BUSINESSES.find(x => x.name.replace(/\s/g, '') === t.slice(1));
+      return b ? b.id : null;
+    }).filter(Boolean);
+    const res = await app.savePost({
+      topic,
+      type,
+      title: title.trim(),
+      excerpt,
+      body: body.trim() || title.trim(),
+      thumb: null,
+      tags
+    });
+    setBusy(false);
+    const saved = res && res.data;
     app.addPost({
-      id: 'np' + Date.now(),
+      id: saved ? saved.id : 'np' + Date.now(),
       topic,
       type,
       author: ME.name,
       time: '방금',
       title: title.trim(),
-      excerpt: (body.trim() || '방금 올린 글이에요').slice(0, 60),
+      excerpt,
       body: body.trim() || title.trim(),
       thumb: null,
       likes: 0,
       comments: 0,
       scrap: false,
-      tags: [],
+      tags,
       _mine: true
     });
-    app.toast(type === 'review' ? '후기 등록 완료! +30 XP · 스탬프 획득 🎉' : '글을 등록했어요');
+    if (res && res.error) app.toast('화면엔 보이지만 저장은 실패했어요. 다시 시도해주세요');else app.toast(type === 'review' ? '후기 등록 완료! +30 XP · 스탬프 획득 🎉' : '글을 등록했어요');
     onClose();
   };
   return /*#__PURE__*/React.createElement("div", {
